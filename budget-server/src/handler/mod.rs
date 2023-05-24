@@ -21,7 +21,7 @@ pub async fn fetch_all_budgets(
 pub async fn fetch_budget_by_id(
     State(repository): State<Arc<Mutex<BudgetRepository>>>,
     Path(id): Path<Uuid>,
-) -> Json<Budget> {
+) -> Json<Option<Budget>> {
     Json(service::get_budget_by_id(repository, id).await)
 }
 
@@ -48,7 +48,7 @@ pub async fn fetch_all_items(
 pub async fn fetch_item_by_id(
     State(repository): State<Arc<Mutex<BudgetRepository>>>,
     Path(id): Path<Uuid>,
-) -> Json<BudgetItem> {
+) -> Json<Option<BudgetItem>> {
     Json(service::get_item_by_id(repository, id).await)
 }
 

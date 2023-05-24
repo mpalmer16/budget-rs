@@ -42,8 +42,8 @@ impl BudgetRepository {
         self.items.clone()
     }
 
-    pub fn get_item_by_id(&self, id: Uuid) -> Option<&BudgetItem> {
-        self.items.iter().find(|item| item.id == id)
+    pub fn get_item_by_id(&self, id: Uuid) -> Option<BudgetItem> {
+        self.items.iter().find(|item| item.id == id).cloned()
     }
 
     pub fn add_item(&mut self, item: BudgetItem) {
