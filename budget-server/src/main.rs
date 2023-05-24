@@ -49,9 +49,37 @@ mod tests {
     use tower::ServiceExt;
     use uuid::Uuid;
 
-    use crate::domain::{Budget, BudgetMonth::{January, self}};
+    use crate::domain::{Budget, BudgetMonth::{January, self}, BudgetItem, BudgetItemType};
 
     use super::*;
+
+    fn create_budget_body_and_response(
+        name: &str,
+        month: BudgetMonth,
+        total_salary: f32
+    ) -> (Budget, String) {
+        let id = Uuid::new_v4();
+        let budget = Budget {
+            id,
+            name: name.to_string(),
+            month,
+            total_salary,
+        };
+        let expected_response = format!("{{\"id\":\"{}\",\"name\":\"{}\",\"month\":\"{}\",\"total_salary\":{}}}", budget.id, budget.name, budget.month, budget.total_salary);
+        (budget, expected_response)
+    }
+
+    fn create_budget_item(name: &str, amount: f32, item_type: BudgetItemType, budget_id: Uuid) -> (BudgetItem, String) {
+        let item = BudgetItem {
+            id: Uuid::new_v4(),
+            name: name.to_string(),
+            amount,
+            item_type,
+            budget_id,
+        };
+        let expected_response = format!("{{\"id\":\"{}\",\"name\":\"{}\",\"amount\":1234.56,\"item_type\":\"{}\",\"budget_id\":\"{}\"}}", item.id, item.name, item.item_type, item.budget_id);
+        (item, expected_response)
+    }
 
     #[tokio::test]
     async fn budgets() {
@@ -68,28 +96,13 @@ mod tests {
         assert_eq!(&body[..], b"[]");
     }
 
-    fn create_budget_body_and_response(
-        title: &str,
-        month: BudgetMonth,
-        total_salary: f32
-    ) -> (Budget, String) {
-        let id = Uuid::new_v4();
-        let budget = Budget {
-            id,
-            name: title.to_string(),
-            month,
-            total_salary,
-        };
-        let expected_response = format!("{{\"id\":\"{}\",\"name\":\"January Budget\",\"month\":\"January\",\"total_salary\":1234.56}}", id);
-        (budget, expected_response)
-    }
-
     #[tokio::test]
     async fn budget_by_id() {
         let repository = Arc::new(Mutex::new(BudgetRepository::new()));
         let (budget, expected_response) = create_budget_body_and_response("January Budget", January, 1234.56);
         let id = budget.id;
         repository.lock().unwrap().add_budget(budget);
+
         let app = app(repository);
 
         let response = app
@@ -104,7 +117,34 @@ mod tests {
         let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
 
         assert_eq!(&body[..], expected_response.as_bytes());
-        }
+    }
+
+    #[tokio::test]
+    async fn item_by_id() {
+        let repository = Arc::new(Mutex::new(BudgetRepository::new()));
+        let (budget, _) = create_budget_body_and_response("January Budget", January, 1234.56);
+        let budget_id = budget.id;
+        let (item, expected_response) = create_budget_item("January Item", 1234.56, BudgetItemType::Misc, budget_id);
+        let item_id = item.id;
+
+        repository.lock().unwrap().add_budget(budget);
+        repository.lock().unwrap().add_item(item);
+
+        let app = app(repository);
+
+        let response = app
+            .oneshot(Request::builder()
+                .uri(&format!("/budget/items/{}", item_id))
+                .body(Body::empty())
+                .unwrap())
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
+
+        assert_eq!(&body[..], expected_response.as_bytes());
+    }
 
 
 }

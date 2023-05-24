@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use uuid::Uuid;
 
 #[derive(serde::Serialize, serde::Deserialize, Clone)]
@@ -55,13 +57,29 @@ impl BudgetItem {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone)]
+#[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Debug)]
 pub enum BudgetItemType {
     Mortgage,
     Bills,
     Food,
     Misc,
     Gas,
+}
+
+impl Display for BudgetItemType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                BudgetItemType::Mortgage => "Mortgage",
+                BudgetItemType::Bills => "Bills",
+                BudgetItemType::Food => "Food",
+                BudgetItemType::Misc => "Misc",
+                BudgetItemType::Gas => "Gas",
+            }
+        )
+    }
 }
 
 #[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone)]
@@ -78,4 +96,27 @@ pub enum BudgetMonth {
     October,
     November,
     December,
+}
+
+impl Display for BudgetMonth {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                BudgetMonth::January => "January",
+                BudgetMonth::February => "February",
+                BudgetMonth::March => "March",
+                BudgetMonth::April => "April",
+                BudgetMonth::May => "May",
+                BudgetMonth::June => "June",
+                BudgetMonth::July => "July",
+                BudgetMonth::August => "August",
+                BudgetMonth::September => "September",
+                BudgetMonth::October => "October",
+                BudgetMonth::November => "November",
+                BudgetMonth::December => "December",
+            }
+        )
+    }
 }
