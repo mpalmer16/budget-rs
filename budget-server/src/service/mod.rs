@@ -20,10 +20,7 @@ pub async fn get_budget_by_id(repository: Arc<Mutex<BudgetRepository>>, id: Uuid
         .unwrap()
 }
 
-pub async fn add_budget(
-    repository: Arc<Mutex<BudgetRepository>>,
-    budget: BudgetCreationRequest,
-) {
+pub async fn add_budget(repository: Arc<Mutex<BudgetRepository>>, budget: BudgetCreationRequest) {
     let budget = Budget::new(budget);
     repository.lock().unwrap().add_budget(budget);
 }
