@@ -9,7 +9,7 @@ pub struct BudgetCreationRequest {
     pub total_salary: f32,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Clone)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Debug)]
 pub struct Budget {
     pub id: Uuid,
     pub name: String,
@@ -82,7 +82,7 @@ impl Display for BudgetItemType {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone)]
+#[derive(serde::Serialize, serde::Deserialize, PartialEq, Clone, Debug)]
 pub enum BudgetMonth {
     January,
     February,

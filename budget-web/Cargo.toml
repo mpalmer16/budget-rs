@@ -6,3 +6,6 @@ edition = "2021"
 
 [dependencies]
 leptos = { version = "0.3.0", features = ["stable"] }
+getrandom = { version = "0.2", features = ["js"] }
+budget-common = { path = "../budget-common" }
+gloo-timers = { version = "0.2.6", features = ["futures"] }
