@@ -1,4 +1,4 @@
-mod domain;
+
 mod handler;
 mod repository;
 mod service;
@@ -41,22 +41,24 @@ fn app(repository: Arc<Mutex<BudgetRepository>>) -> Router {
         .with_state(repository)
 }
 
-
 #[cfg(test)]
 mod tests {
 
-    use axum::{http::{Request, StatusCode}, body::Body};
+    use axum::{
+        body::Body,
+        http::{Request, StatusCode},
+    };
+    use budget_common::domain::{BudgetMonth, Budget, BudgetItemType, BudgetItem};
     use tower::ServiceExt;
     use uuid::Uuid;
 
-    use crate::domain::{Budget, BudgetMonth::{January, self}, BudgetItem, BudgetItemType};
 
     use super::*;
 
     fn create_budget_body_and_response(
         name: &str,
         month: BudgetMonth,
-        total_salary: f32
+        total_salary: f32,
     ) -> (Budget, String) {
         let id = Uuid::new_v4();
         let budget = Budget {
@@ -65,11 +67,19 @@ mod tests {
             month,
             total_salary,
         };
-        let expected_response = format!("{{\"id\":\"{}\",\"name\":\"{}\",\"month\":\"{}\",\"total_salary\":{}}}", budget.id, budget.name, budget.month, budget.total_salary);
+        let expected_response = format!(
+            "{{\"id\":\"{}\",\"name\":\"{}\",\"month\":\"{}\",\"total_salary\":{}}}",
+            budget.id, budget.name, budget.month, budget.total_salary
+        );
         (budget, expected_response)
     }
 
-    fn create_budget_item(name: &str, amount: f32, item_type: BudgetItemType, budget_id: Uuid) -> (BudgetItem, String) {
+    fn create_budget_item(
+        name: &str,
+        amount: f32,
+        item_type: BudgetItemType,
+        budget_id: Uuid,
+    ) -> (BudgetItem, String) {
         let item = BudgetItem {
             id: Uuid::new_v4(),
             name: name.to_string(),
@@ -87,7 +97,12 @@ mod tests {
         let app = app(repository);
 
         let response = app
-            .oneshot(Request::builder().uri("/budget/budgets").body(Body::empty()).unwrap())
+            .oneshot(
+                Request::builder()
+                    .uri("/budget/budgets")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
         assert_eq!(response.status(), StatusCode::OK);
@@ -99,17 +114,20 @@ mod tests {
     #[tokio::test]
     async fn budget_by_id() {
         let repository = Arc::new(Mutex::new(BudgetRepository::new()));
-        let (budget, expected_response) = create_budget_body_and_response("January Budget", January, 1234.56);
+        let (budget, expected_response) =
+            create_budget_body_and_response("January Budget", BudgetMonth::January, 1234.56);
         let id = budget.id;
         repository.lock().unwrap().add_budget(budget);
 
         let app = app(repository);
 
         let response = app
-            .oneshot(Request::builder()
-                .uri(&format!("/budget/budgets/{}", id))
-                .body(Body::empty())
-                .unwrap())
+            .oneshot(
+                Request::builder()
+                    .uri(&format!("/budget/budgets/{}", id))
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
         assert_eq!(response.status(), StatusCode::OK);
@@ -122,9 +140,10 @@ mod tests {
     #[tokio::test]
     async fn item_by_id() {
         let repository = Arc::new(Mutex::new(BudgetRepository::new()));
-        let (budget, _) = create_budget_body_and_response("January Budget", January, 1234.56);
+        let (budget, _) = create_budget_body_and_response("January Budget", BudgetMonth::January, 1234.56);
         let budget_id = budget.id;
-        let (item, expected_response) = create_budget_item("January Item", 1234.56, BudgetItemType::Misc, budget_id);
+        let (item, expected_response) =
+            create_budget_item("January Item", 1234.56, BudgetItemType::Misc, budget_id);
         let item_id = item.id;
 
         repository.lock().unwrap().add_budget(budget);
@@ -133,10 +152,12 @@ mod tests {
         let app = app(repository);
 
         let response = app
-            .oneshot(Request::builder()
-                .uri(&format!("/budget/items/{}", item_id))
-                .body(Body::empty())
-                .unwrap())
+            .oneshot(
+                Request::builder()
+                    .uri(&format!("/budget/items/{}", item_id))
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
         assert_eq!(response.status(), StatusCode::OK);
@@ -145,6 +166,4 @@ mod tests {
 
         assert_eq!(&body[..], expected_response.as_bytes());
     }
-
-
 }

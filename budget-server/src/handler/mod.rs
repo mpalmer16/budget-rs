@@ -6,8 +6,9 @@ use axum::{
 };
 use uuid::Uuid;
 
+use budget_common::domain::{Budget, BudgetCreationRequest, BudgetItem, BudgetItemCreationRequest};
+
 use crate::{
-    domain::{Budget, BudgetCreationRequest, BudgetItem, BudgetItemCreationRequest},
     repository::BudgetRepository,
     service,
 };

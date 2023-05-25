@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::domain::{Budget, BudgetItem};
+use budget_common::domain::{Budget, BudgetItem};
 
 #[derive(Serialize, Deserialize)]
 pub struct BudgetRepository {

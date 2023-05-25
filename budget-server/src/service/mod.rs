@@ -2,21 +2,21 @@ use std::sync::{Arc, Mutex};
 
 use uuid::Uuid;
 
-use crate::{
+use budget_common::{
     domain::{Budget, BudgetCreationRequest, BudgetItem, BudgetItemCreationRequest},
-    repository::BudgetRepository,
 };
+
+use crate::repository::BudgetRepository;
 
 pub async fn get_all_budgets(repository: Arc<Mutex<BudgetRepository>>) -> Vec<Budget> {
     repository.lock().unwrap().get_all_budgets()
 }
 
-pub async fn get_budget_by_id(repository: Arc<Mutex<BudgetRepository>>, id: Uuid) -> Option<Budget> {
-    repository
-        .lock()
-        .unwrap()
-        .get_budget_by_id(id)
-        .cloned()
+pub async fn get_budget_by_id(
+    repository: Arc<Mutex<BudgetRepository>>,
+    id: Uuid,
+) -> Option<Budget> {
+    repository.lock().unwrap().get_budget_by_id(id).cloned()
 }
 
 pub async fn add_budget(repository: Arc<Mutex<BudgetRepository>>, budget: BudgetCreationRequest) {
@@ -32,11 +32,11 @@ pub async fn get_all_budget_items(repository: Arc<Mutex<BudgetRepository>>) -> V
     repository.lock().unwrap().get_all_items()
 }
 
-pub async fn get_item_by_id(repository: Arc<Mutex<BudgetRepository>>, id: Uuid) -> Option<BudgetItem> {
-    repository
-        .lock()
-        .unwrap()
-        .get_item_by_id(id)
+pub async fn get_item_by_id(
+    repository: Arc<Mutex<BudgetRepository>>,
+    id: Uuid,
+) -> Option<BudgetItem> {
+    repository.lock().unwrap().get_item_by_id(id)
 }
 
 pub async fn add_budget_item(
