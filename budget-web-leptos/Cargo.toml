@@ -1,5 +1,5 @@
 [package]
-name = "budget-web"
+name = "budget-web-leptos"
 version = "0.1.0"
 edition = "2021"
 
