@@ -2,9 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use uuid::Uuid;
 
-use budget_common::{
-    domain::{Budget, BudgetCreationRequest, BudgetItem, BudgetItemCreationRequest},
-};
+use budget_common::domain::{Budget, BudgetCreationRequest, BudgetItem, BudgetItemCreationRequest};
 
 use crate::repository::BudgetRepository;
 

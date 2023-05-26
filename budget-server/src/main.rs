@@ -1,4 +1,3 @@
-
 mod handler;
 mod repository;
 mod service;
@@ -13,21 +12,37 @@ use handler::{
     add_budget, add_item, add_items, fetch_all_budgets, fetch_all_items, fetch_budget_by_id,
     fetch_item_by_id, update_budget, update_item,
 };
+use hyper::Method;
 use repository::BudgetRepository;
+use tower_http::{trace::TraceLayer, cors::{CorsLayer, Any}};
+use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
 async fn main() {
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+                "budget_server=debug,tower_http=debug,axum::rejection=trace".into()
+            }),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
+
     let repository = Arc::new(Mutex::new(BudgetRepository::new()));
 
     let app = app(repository);
 
-    axum::Server::bind(&"0.0.0.0:8080".parse().unwrap())
+    axum::Server::bind(&"0.0.0.0:8081".parse().unwrap())
         .serve(app.into_make_service())
         .await
         .unwrap();
 }
 
 fn app(repository: Arc<Mutex<BudgetRepository>>) -> Router {
+    let cors = CorsLayer::new()
+        .allow_methods([Method::GET, Method::POST])
+        .allow_origin(Any);
+
     Router::new()
         .route("/budget/budgets", get(fetch_all_budgets))
         .route("/budget/budgets/:id", get(fetch_budget_by_id))
@@ -39,6 +54,8 @@ fn app(repository: Arc<Mutex<BudgetRepository>>) -> Router {
         .route("/budget/items/addAll", post(add_items))
         .route("/budget/items/update", post(update_item))
         .with_state(repository)
+        .layer(TraceLayer::new_for_http())
+        .layer(cors)
 }
 
 #[cfg(test)]
@@ -48,10 +65,9 @@ mod tests {
         body::Body,
         http::{Request, StatusCode},
     };
-    use budget_common::domain::{BudgetMonth, Budget, BudgetItemType, BudgetItem};
+    use budget_common::domain::{Budget, BudgetItem, BudgetItemType, BudgetMonth};
     use tower::ServiceExt;
     use uuid::Uuid;
-
 
     use super::*;
 
@@ -140,7 +156,8 @@ mod tests {
     #[tokio::test]
     async fn item_by_id() {
         let repository = Arc::new(Mutex::new(BudgetRepository::new()));
-        let (budget, _) = create_budget_body_and_response("January Budget", BudgetMonth::January, 1234.56);
+        let (budget, _) =
+            create_budget_body_and_response("January Budget", BudgetMonth::January, 1234.56);
         let budget_id = budget.id;
         let (item, expected_response) =
             create_budget_item("January Item", 1234.56, BudgetItemType::Misc, budget_id);

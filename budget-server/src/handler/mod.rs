@@ -8,10 +8,7 @@ use uuid::Uuid;
 
 use budget_common::domain::{Budget, BudgetCreationRequest, BudgetItem, BudgetItemCreationRequest};
 
-use crate::{
-    repository::BudgetRepository,
-    service,
-};
+use crate::{repository::BudgetRepository, service};
 
 pub async fn fetch_all_budgets(
     State(repository): State<Arc<Mutex<BudgetRepository>>>,
