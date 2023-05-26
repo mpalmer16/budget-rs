@@ -44,12 +44,12 @@ fn BudgetTable(cx: Scope, #[prop(into)] budgets: Signal::<Vec<Budget>>) -> impl 
 #[component]
 fn App(cx: Scope) -> impl IntoView {
 
-    let (budgets, set_budgets) = create_signal(cx, fetch_from_server());
+    let (_budgets, _set_budgets) = create_signal(cx, fetch_from_server());
 
     let budgets_resource = create_resource(
         cx,
-        budgets,
-        |b| async move { fetch_from_server().await },
+        || (),
+        |_| async move { fetch_from_server().await },
     );
 
     let budget_result = move || {
