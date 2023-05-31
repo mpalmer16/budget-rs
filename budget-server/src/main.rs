@@ -8,13 +8,17 @@ use axum::{
     routing::{get, post},
     Router,
 };
+
 use handler::{
     add_budget, add_item, add_items, fetch_all_budgets, fetch_all_items, fetch_budget_by_id,
     fetch_item_by_id, update_budget, update_item,
 };
 use hyper::Method;
 use repository::BudgetRepository;
-use tower_http::{trace::TraceLayer, cors::{CorsLayer, Any}};
+use tower_http::{
+    cors::{Any, CorsLayer},
+    trace::TraceLayer,
+};
 use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
@@ -30,15 +34,15 @@ async fn main() {
 
     let repository = Arc::new(Mutex::new(BudgetRepository::new()));
 
-    let app = app(repository);
+    let router = create_router(repository);
 
     axum::Server::bind(&"0.0.0.0:8081".parse().unwrap())
-        .serve(app.into_make_service())
+        .serve(router.into_make_service())
         .await
         .unwrap();
 }
 
-fn app(repository: Arc<Mutex<BudgetRepository>>) -> Router {
+fn create_router(state: Arc<Mutex<BudgetRepository>>) -> Router {
     let cors = CorsLayer::new()
         .allow_methods([Method::GET, Method::POST])
         .allow_origin(Any);
@@ -53,7 +57,7 @@ fn app(repository: Arc<Mutex<BudgetRepository>>) -> Router {
         .route("/budget/items/add", post(add_item))
         .route("/budget/items/addAll", post(add_items))
         .route("/budget/items/update", post(update_item))
-        .with_state(repository)
+        .with_state(state)
         .layer(TraceLayer::new_for_http())
         .layer(cors)
 }
@@ -110,7 +114,7 @@ mod tests {
     #[tokio::test]
     async fn budgets() {
         let repository = Arc::new(Mutex::new(BudgetRepository::new()));
-        let app = app(repository);
+        let app = create_router(repository);
 
         let response = app
             .oneshot(
@@ -135,7 +139,7 @@ mod tests {
         let id = budget.id;
         repository.lock().unwrap().add_budget(budget);
 
-        let app = app(repository);
+        let app = create_router(repository);
 
         let response = app
             .oneshot(
@@ -166,7 +170,7 @@ mod tests {
         repository.lock().unwrap().add_budget(budget);
         repository.lock().unwrap().add_item(item);
 
-        let app = app(repository);
+        let app = create_router(repository);
 
         let response = app
             .oneshot(
