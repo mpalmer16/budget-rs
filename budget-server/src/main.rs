@@ -2,21 +2,20 @@ mod handler;
 mod repository;
 mod service;
 
-use std::{sync::{Arc, Mutex}, time::Duration};
+use std::sync::{Arc, Mutex};
 
 use axum::{
     routing::{get, post},
-    Router, extract::State,
+    Router,
 };
-
 
 use handler::{
     add_budget, add_item, add_items, fetch_all_budgets, fetch_all_items, fetch_budget_by_id,
     fetch_item_by_id, update_budget, update_item,
 };
-use hyper::{Method, StatusCode};
+use hyper::Method;
 use repository::BudgetRepository;
-use sqlx::{postgres::PgPoolOptions, Postgres, Pool};
+
 use tower_http::{
     cors::{Any, CorsLayer},
     trace::TraceLayer,
@@ -34,31 +33,14 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let db_connection_str = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://postgres:postgres@localhost:5432/budget_db".into());
-
-    let pool = PgPoolOptions::new()
-        .max_connections(5)
-        .acquire_timeout(Duration::from_secs(3))
-        .connect(&db_connection_str)
-        .await
-        .expect("can't connect to database");
-
     let repository = Arc::new(Mutex::new(BudgetRepository::new()));
 
-    let _router = create_router(repository);
+    let router = create_router(repository);
 
-    let db_router = create_db_router(pool);
-
-    axum::Server::bind(&"0.0.0.0:8082".parse().unwrap())
-        .serve(db_router.into_make_service())
+    axum::Server::bind(&"0.0.0.0:8081".parse().unwrap())
+        .serve(router.into_make_service())
         .await
         .unwrap();
-
-    // axum::Server::bind(&"0.0.0.0:8081".parse().unwrap())
-    //     .serve(router.into_make_service())
-    //     .await
-    //     .unwrap();
 }
 
 fn create_router(state: Arc<Mutex<BudgetRepository>>) -> Router {
@@ -79,34 +61,6 @@ fn create_router(state: Arc<Mutex<BudgetRepository>>) -> Router {
         .with_state(state)
         .layer(TraceLayer::new_for_http())
         .layer(cors)
-}
-
-fn create_db_router(state: Pool<Postgres>) -> Router {
-    let cors = CorsLayer::new()
-        .allow_methods([Method::GET, Method::POST])
-        .allow_origin(Any);
-    Router::new()
-        .route("/budget/budgets", get(fetch_all_budgets_db))
-        .with_state(state)
-        .layer(TraceLayer::new_for_http())
-        .layer(cors)
-}
-
-async fn fetch_all_budgets_db(
-    State(pool): State<Pool<Postgres>>,
-) -> Result<String, (StatusCode, String)> {
-    sqlx::query_scalar("select 'hello world from pg'")
-        .fetch_one(&pool)
-        .await
-        .map_err(internal_error)
-
-}
-
-fn internal_error<E>(err: E) -> (StatusCode, String)
-where
-    E: std::error::Error,
-{
-    (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
 }
 
 #[cfg(test)]

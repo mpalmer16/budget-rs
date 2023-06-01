@@ -14,7 +14,6 @@ budget-common = { path = "../budget-common" }
 tower-http = { version = "0.4.0", features = ["trace", "cors"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-sqlx = { version = "0.6.3", features = ["runtime-tokio-rustls", "any", "postgres"] }
 
 [dev-dependencies]
 tower = { version = "0.4.13", features = ["util"] }
